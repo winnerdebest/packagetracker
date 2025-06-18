@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Package Tracker</title>
+
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        
+        #full-page-map {
+            position: fixed; /* Fixes it relative to the viewport */
+            top: 0;
+            left: 0;
+            width: 100vw; /* 100% of viewport width */
+            height: 100vh; /* 100% of viewport height */
+            z-index: -1; /* Puts it behind other content */
+        }
+
+        /* Ensure body and main content correctly overlay the map */
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: transparent; /* Body itself should be transparent to show map */
+            margin: 0; /* Remove default body margin */
+        }
+
+        main {
+            position: relative; /* Essential for z-index to work against fixed map */
+            z-index: 1; /* Puts main content above the map */
+            flex-grow: 1; /* Allows main to take available space */
+            /* Added a slightly opaque background to make text readable over the map */
+            background-color: rgba(243, 244, 246, 0.85); /* Tailwind's bg-gray-100 with opacity */
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        /* Nav also needs to be on top */
+        nav {
+            position: relative;
+            z-index: 2; /* Higher than main, ensuring it's always on top */
+        }
+    </style>
+</head>
+<body>
+    <!-- Sleek Navigation Bar -->
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                    </div>
+                    <h1 class="text-xl font-semibold text-gray-800">Ivan Logistics</h1>
+                </div>
+                
+            </div>
+        </div>
+    </nav>
+
+    <!-- Clean Main Content Area -->
+    <main class="container mx-auto px-4 py-6">
+        <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-sm p-6">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+</html>

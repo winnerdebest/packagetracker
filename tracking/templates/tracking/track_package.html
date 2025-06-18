@@ -1,0 +1,88 @@
+{% extends 'tracking/base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md mx-auto">
+    <!-- Logo/Header -->
+    <div class="text-center mb-8">
+      <svg class="mx-auto h-12 w-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4m8-4v10M4 7l8-4" />
+      </svg>
+      <h2 class="mt-4 text-2xl font-bold text-gray-900">Track Your Package</h2>
+      <p class="mt-2 text-sm text-gray-600">Enter your tracking number to check delivery status</p>
+    </div>
+
+    <!-- Form Box -->
+    <div class="bg-white py-8 px-6 shadow rounded-lg">
+
+      <!-- Error Message -->
+      {% if error %}
+        <div class="mb-6 rounded-md bg-red-50 p-4 border border-red-300">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 11-12.728 0m12.728 0L5.636 18.364" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-red-700">
+                {{ error }}
+              </p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Tracking Form -->
+      <form action="{% url 'package_results' %}" method="get" class="space-y-6">
+        <div>
+          <label for="tracking_number" class="block text-sm font-medium text-gray-700 mb-1">
+            Tracking Number
+            <span class="text-red-500">*</span>
+          </label>
+          <div class="mt-1 relative rounded-md shadow-sm">
+            <input type="text" name="tracking_number" id="tracking_number"
+                   value="{{ tracking_number|default:'' }}"
+                   class="block w-full rounded-md border-gray-300 pl-4 pr-12 py-3 focus:border-blue-500 focus:ring-blue-500"
+                   placeholder="e.g. ABC123456789"
+                   required
+                   aria-describedby="tracking-number-help">
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+          </div>
+          <p id="tracking-number-help" class="mt-2 text-sm text-gray-500">
+            Find your tracking number in your order confirmation email or receipt.
+          </p>
+        </div>
+
+        <div>
+          <button type="submit" 
+                  class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            Track Package
+          </button>
+        </div>
+      </form>
+
+      <div class="mt-6 border-t border-gray-200 pt-6">
+        <h3 class="text-sm font-medium text-gray-900">Need help?</h3>
+        <p class="mt-1 text-sm text-gray-600">
+          Contact our <a href="#" class="font-medium text-blue-600 hover:text-blue-500">customer support</a> if you're having trouble finding your tracking number.
+        </p>
+      </div>
+    </div>
+
+    <!-- Recent tracking section (optional) -->
+    <div class="mt-8 text-center">
+      <button type="button" class="text-sm font-medium text-blue-600 hover:text-blue-500">
+        View recently tracked packages
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}

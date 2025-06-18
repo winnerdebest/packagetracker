@@ -1,0 +1,189 @@
+{% extends 'tracking/base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md mx-auto">
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <!-- Form Header -->
+      <div class="bg-blue-600 px-6 py-4">
+        <h2 class="text-xl font-bold text-white">Add Delivery History</h2>
+        <p class="mt-1 text-blue-100">Package #{{ package.tracking_number }}</p>
+      </div>
+
+      <!-- Form Body -->
+      <div class="px-6 py-6">
+        {% if error %}
+        <div class="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+          <p class="text-red-700">{{ error }}</p>
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-5" id="delivery-history-form">
+          {% csrf_token %}
+
+          <!-- City Input with Autocomplete -->
+          <div class="relative">
+            <label for="city-input" class="block text-sm font-medium text-gray-700 mb-1">
+              City <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input type="text" name="city" id="city-input" autocomplete="off" required
+                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                     placeholder="Start typing city name...">
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+            </div>
+            <div id="city-suggestions" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto hidden"></div>
+            <input type="hidden" name="latitude" id="latitude" />
+            <input type="hidden" name="longitude" id="longitude" />
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">
+              Notes
+            </label>
+            <textarea name="notes" id="notes" rows="3"
+                      class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      placeholder="Any additional delivery details..."></textarea>
+          </div>
+
+          <!-- Status Select -->
+          <div>
+            <label for="delivery-status" class="block text-sm font-medium text-gray-700 mb-1">
+              Delivery Status
+            </label>
+            <select name="delivery_status" id="delivery-status"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+              <option value="">-- Select Status --</option>
+              {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if delivery_status == value %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex flex-col sm:flex-row gap-3 pt-4">
+            <button type="submit" name="add_more" value="1"
+                    class="flex-1 flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+              <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Another
+            </button>
+            <button type="submit"
+                    class="flex-1 flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Finish
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const cityInput = document.getElementById('city-input');
+const suggestionsBox = document.getElementById('city-suggestions');
+const latInput = document.getElementById('latitude');
+const lonInput = document.getElementById('longitude');
+
+let debounceTimeout = null;
+
+cityInput.addEventListener('input', () => {
+    const query = cityInput.value.trim();
+
+    // Clear previous lat/lon on input change
+    latInput.value = '';
+    lonInput.value = '';
+
+    if (debounceTimeout) clearTimeout(debounceTimeout);
+    if (query.length < 3) {
+        suggestionsBox.innerHTML = '';
+        suggestionsBox.classList.add('hidden');
+        return;
+    }
+
+    debounceTimeout = setTimeout(() => {
+        fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=10&addressdetails=1`)
+            .then(res => res.json())
+            .then(data => {
+                suggestionsBox.innerHTML = '';
+                if (data.length === 0) {
+                    suggestionsBox.classList.add('hidden');
+                    return;
+                }
+                
+                // Prioritize cities, towns, villages
+                const cities = data.filter(place =>
+                    place.class === 'place' &&
+                    (place.type === 'city' || place.type === 'town' || place.type === 'village' || place.type === 'hamlet')
+                );
+
+                const results = cities.length > 0 ? cities : data;
+                
+                results.forEach(place => {
+                    const div = document.createElement('div');
+                    div.classList.add('p-3', 'cursor-pointer', 'hover:bg-blue-50', 'border-b', 'border-gray-100');
+                    
+                    // Try to get the most specific name first
+                    const address = place.address;
+                    let displayName = address.city || address.town || address.village || address.hamlet || 
+                                     address.county || address.state || place.display_name.split(',')[0];
+                    
+                    div.innerHTML = `
+                        <div class="font-medium">${displayName}</div>
+                        <div class="text-xs text-gray-500 truncate">${place.display_name}</div>
+                    `;
+                    
+                    div.dataset.lat = place.lat;
+                    div.dataset.lon = place.lon;
+                    div.dataset.city = displayName;
+
+                    div.addEventListener('click', () => {
+                        cityInput.value = displayName;
+                        latInput.value = place.lat;
+                        lonInput.value = place.lon;
+                        suggestionsBox.innerHTML = '';
+                        suggestionsBox.classList.add('hidden');
+                    });
+                    
+                    suggestionsBox.appendChild(div);
+                });
+                
+                suggestionsBox.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error fetching city suggestions:', error);
+                suggestionsBox.innerHTML = '<div class="p-2 text-red-500">Error loading suggestions</div>';
+                suggestionsBox.classList.remove('hidden');
+            });
+    }, 300);
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', (e) => {
+    if (!cityInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+        suggestionsBox.innerHTML = '';
+        suggestionsBox.classList.add('hidden');
+    }
+});
+
+// Close suggestions on escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        suggestionsBox.innerHTML = '';
+        suggestionsBox.classList.add('hidden');
+    }
+});
+</script>
+{% endblock %}

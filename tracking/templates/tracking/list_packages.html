@@ -1,0 +1,274 @@
+{% extends 'tracking/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Package Tracking</h1>
+        <p class="mt-1 text-sm text-gray-500">View and manage all your packages</p>
+      </div>
+      <a href="{% url "create_package" %}" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Add New Package
+      </a>
+    </div>
+
+    <!-- Messages/Alerts -->
+    {% if messages %}
+      <div class="mb-6 space-y-4">
+        {% for message in messages %}
+          <div class="rounded-md p-4
+            {% if message.tags == 'success' %} bg-green-50 border border-green-200 {% endif %}
+            {% if message.tags == 'error' %} bg-red-50 border border-red-200 {% endif %}
+            {% if message.tags == 'warning' %} bg-yellow-50 border border-yellow-200 {% endif %}
+            {% if message.tags == 'info' %} bg-blue-50 border border-blue-200 {% endif %}">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5
+                  {% if message.tags == 'success' %} text-green-400 {% endif %}
+                  {% if message.tags == 'error' %} text-red-400 {% endif %}
+                  {% if message.tags == 'warning' %} text-yellow-400 {% endif %}
+                  {% if message.tags == 'info' %} text-blue-400 {% endif %}" 
+                  viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium
+                  {% if message.tags == 'success' %} text-green-800 {% endif %}
+                  {% if message.tags == 'error' %} text-red-800 {% endif %}
+                  {% if message.tags == 'warning' %} text-yellow-800 {% endif %}
+                  {% if message.tags == 'info' %} text-blue-800 {% endif %}">
+                  {{ message }}
+                </p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Package List -->
+    {% if packages %}
+      <!-- Desktop Table (hidden on mobile) -->
+      <div class="hidden md:block bg-white shadow overflow-hidden sm:rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Tracking #
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Current Location
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Destination
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Est. Delivery
+              </th>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for package in packages %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <a href="{{ package.view_url }}" class="text-blue-600 hover:text-blue-800 font-medium">
+                  {{ package.tracking_number }}
+                </a>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                  {% if package.status == 'DELIVERED' %} bg-green-100 text-green-800
+                  {% elif package.status == 'IN_TRANSIT' %} bg-blue-100 text-blue-800
+                  {% elif package.status == 'OUT_FOR_DELIVERY' %} bg-purple-100 text-purple-800
+                  {% elif package.status == 'DELAYED' %} bg-red-100 text-red-800
+                  {% else %} bg-yellow-100 text-yellow-800 {% endif %}">
+                  {{ package.get_status_display }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                {{ package.current_city|default:"-" }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                {{ package.destination_city|default:"-" }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ package.estimated_delivery|date:"M j, Y"|default:"-" }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div class="flex justify-end space-x-3">
+                  <a href="{{ package.view_url }}" class="text-indigo-600 hover:text-indigo-900" title="View">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </a>
+                  <button type="button" class="copy-link-btn text-gray-600 hover:text-gray-900" data-url="{{ package.view_url }}" title="Copy Link">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <a href="#" class="text-yellow-600 hover:text-yellow-900" title="Edit">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </a>
+                  <a href="#" class="text-red-600 hover:text-red-900" title="Delete">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Cards (shown on mobile) -->
+      <div class="md:hidden space-y-4">
+        {% for package in packages %}
+        <div class="bg-white shadow overflow-hidden rounded-lg">
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <div class="flex justify-between items-start">
+              <h3 class="text-lg leading-6 font-medium text-gray-900">
+                <a href="{{ package.view_url }}" class="text-blue-600 hover:text-blue-800">{{ package.tracking_number }}</a>
+              </h3>
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                {% if package.status == 'DELIVERED' %} bg-green-100 text-green-800
+                {% elif package.status == 'IN_TRANSIT' %} bg-blue-100 text-blue-800
+                {% elif package.status == 'OUT_FOR_DELIVERY' %} bg-purple-100 text-purple-800
+                {% elif package.status == 'DELAYED' %} bg-red-100 text-red-800
+                {% else %} bg-yellow-100 text-yellow-800 {% endif %}">
+                {{ package.get_status_display }}
+              </span>
+            </div>
+          </div>
+          <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+            <dl class="sm:divide-y sm:divide-gray-200">
+              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Current Location</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ package.current_city|default:"-" }}</dd>
+              </div>
+              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Destination</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ package.destination_city|default:"-" }}</dd>
+              </div>
+              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Est. Delivery</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ package.estimated_delivery|date:"M j, Y"|default:"-" }}</dd>
+              </div>
+            </dl>
+          </div>
+          <div class="px-4 py-4 bg-gray-50 flex justify-end space-x-4">
+            <a href="{{ package.view_url }}" class="text-indigo-600 hover:text-indigo-900" title="View">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </a>
+            <button type="button" class="copy-link-btn text-gray-600 hover:text-gray-900" data-url="{{ package.view_url }}" title="Copy Link">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <a href="#" class="text-yellow-600 hover:text-yellow-900" title="Edit">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </a>
+            <a href="#" class="text-red-600 hover:text-red-900" title="Delete">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </a>
+            <a href="{% url "add_delivery_history" package.id %}" class="text-blue-600 hover:text-blue-900" title="Edit History">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.232 5.232l3.536 3.536M9 11l6.293-6.293a1 1 0 011.414 0l2.586 2.586a1 1 0 010 1.414L13 15l-4 1 1-4z" />
+                </svg>
+            </a>
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <!-- Empty State -->
+      <div class="text-center bg-white py-16 px-6 rounded-lg shadow">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900">No packages</h3>
+        <p class="mt-1 text-sm text-gray-500">Get started by creating a new package.</p>
+        <div class="mt-6">
+          <a href="#" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            New Package
+          </a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Copy link functionality
+  const copyButtons = document.querySelectorAll('.copy-link-btn');
+  
+  copyButtons.forEach(button => {
+    button.addEventListener('click', async function() {
+      const urlToCopy = this.dataset.url;
+      const originalHTML = this.innerHTML;
+      
+      try {
+        await navigator.clipboard.writeText(urlToCopy);
+        
+        // Show success feedback
+        this.innerHTML = `
+          <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        `;
+        this.title = 'Copied!';
+        
+        // Revert after 2 seconds
+        setTimeout(() => {
+          this.innerHTML = originalHTML;
+          this.title = 'Copy Link';
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy: ', err);
+        this.innerHTML = `
+          <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        `;
+        this.title = 'Failed to copy';
+        
+        setTimeout(() => {
+          this.innerHTML = originalHTML;
+          this.title = 'Copy Link';
+        }, 2000);
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

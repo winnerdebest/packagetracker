@@ -1,0 +1,218 @@
+{% extends 'tracking/base.html' %}
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-3xl mx-auto">
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <div class="bg-blue-600 px-6 py-4">
+        <h2 class="text-2xl font-bold text-white">Create New Package</h2>
+        <p class="mt-1 text-blue-100">Enter package details to create a new tracking record</p>
+      </div>
+
+      <div class="px-6 py-6">
+        {% if error %}
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500">
+          <p class="text-red-700">{{ error }}</p>
+        </div>
+        {% endif %}
+
+        <form method="POST" id="packageForm" class="space-y-6">
+          {% csrf_token %}
+          
+          <div>
+            <label for="tracking_number" class="block text-sm font-medium text-gray-700 mb-1">
+              Tracking Number <span class="text-red-500">*</span>
+            </label>
+            <input type="text" name="tracking_number" id="tracking_number" required
+                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                   placeholder="e.g. ABC123456789">
+          </div>
+
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
+              Status <span class="text-red-500">*</span>
+            </label>
+            <select name="status" id="status" required
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+              <option value="" disabled selected>Select status</option>
+              <option value="PENDING">Pending</option>
+              <option value="IN_TRANSIT">In Transit</option>
+              <option value="DELAYED">Delayed</option>
+              <option value="DELIVERED">Delivered</option>
+            </select>
+          </div>
+
+          <div class="relative">
+            <label for="current_city" class="block text-sm font-medium text-gray-700 mb-1">
+              Current Location <span class="text-red-500">*</span>
+            </label>
+            <input type="text" name="current_city" id="current_city" autocomplete="off" required
+                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                   placeholder="Start typing city name...">
+            <div id="city_suggestions" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto hidden"></div>
+            <input type="hidden" name="latitude" id="latitude" />
+            <input type="hidden" name="longitude" id="longitude" />
+          </div>
+
+          <div class="relative">
+            <label for="destination_city" class="block text-sm font-medium text-gray-700 mb-1">
+              Destination <span class="text-red-500">*</span>
+            </label>
+            <input type="text" name="destination_city" id="destination_city" autocomplete="off" required
+                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                   placeholder="Start typing city name...">
+            <div id="destination_suggestions" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto hidden"></div>
+            <input type="hidden" name="destination_latitude" id="destination_latitude" />
+            <input type="hidden" name="destination_longitude" id="destination_longitude" />
+          </div>
+
+          <div>
+            <label for="estimated_delivery" class="block text-sm font-medium text-gray-700 mb-1">
+              Estimated Delivery <span class="text-red-500">*</span>
+            </label>
+            <input type="datetime-local" name="estimated_delivery" id="estimated_delivery" required
+                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+          </div>
+
+          <div class="pt-4">
+            <button type="submit" 
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+              <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Create Package
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Function to set up city autocomplete for a given input field
+function setupCityAutocomplete({ inputId, suggestionsId, latId, lonId }) {
+    const input = document.getElementById(inputId);
+    const suggestionsBox = document.getElementById(suggestionsId);
+    const latInput = document.getElementById(latId);
+    const lonInput = document.getElementById(lonId);
+    let debounceTimeout = null;
+
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && (!latInput.value || !lonInput.value)) {
+            e.preventDefault();
+        }
+    });
+
+    input.addEventListener('input', function () {
+        const query = this.value.trim();
+        // Clear hidden lat/lon when user types, so they must select from suggestions
+        latInput.value = '';
+        lonInput.value = '';
+
+        // Clear any existing debounce timeout
+        if (debounceTimeout) clearTimeout(debounceTimeout);
+
+        // Hide suggestions if query is too short
+        if (query.length < 3) {
+            suggestionsBox.style.display = 'none';
+            suggestionsBox.innerHTML = '';
+            return;
+        }
+
+        // Debounce the API call to prevent excessive requests
+        debounceTimeout = setTimeout(() => {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&city=${encodeURIComponent(query)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    suggestionsBox.innerHTML = ''; // Clear previous suggestions
+                    if (data.length === 0) {
+                        suggestionsBox.style.display = 'none'; // Hide if no results
+                        return;
+                    }
+                    // Populate suggestions box
+                    data.forEach(place => {
+                        const div = document.createElement('div');
+                        div.classList.add('p-3', 'cursor-pointer', 'hover:bg-blue-50', 'border-b', 'border-gray-100');
+                        // Display primary name (city) and secondary info (state, country)
+                        div.innerHTML = `
+                            <div class="font-medium">${place.display_name.split(',')[0]}</div>
+                            <div class="text-sm text-gray-500">${place.display_name.split(',').slice(1).join(',').trim()}</div>
+                        `;
+                        // When a suggestion is clicked, populate the input and hidden fields
+                        div.addEventListener('click', () => {
+                            input.value = place.display_name;
+                            latInput.value = place.lat;
+                            lonInput.value = place.lon;
+                            suggestionsBox.innerHTML = '';
+                            suggestionsBox.style.display = 'none'; // Hide suggestions after selection
+                            input.blur(); // Attempt to hide the virtual keyboard
+                        });
+                        suggestionsBox.appendChild(div);
+                    });
+                    suggestionsBox.style.display = 'block'; // Show suggestions
+                })
+                .catch(error => {
+                    console.error("Autocomplete fetch error:", error); // Log errors to console
+                    suggestionsBox.style.display = 'none';
+                    suggestionsBox.innerHTML = '';
+                });
+        }, 300); // 300ms debounce time
+    });
+
+    // Hide suggestions when clicking outside the input and suggestions box
+    document.addEventListener('click', (e) => {
+        // Only hide if the click target is NOT the input field itself and NOT within the suggestions box
+        if (!suggestionsBox.contains(e.target) && e.target !== input) {
+            suggestionsBox.style.display = 'none';
+        }
+    });
+
+    // Re-show suggestions if the input is focused again and has enough text
+    input.addEventListener('focus', function() {
+        const query = this.value.trim();
+        // Only show if there's enough query text and suggestions were previously generated
+        if (query.length >= 3 && suggestionsBox.innerHTML !== '') {
+            suggestionsBox.style.display = 'block';
+        }
+    });
+}
+
+// Ensure the DOM is fully loaded before setting up autocompletes
+document.addEventListener('DOMContentLoaded', () => {
+    // Setup for current location autocomplete
+    setupCityAutocomplete({
+        inputId: 'current_city',
+        suggestionsId: 'city_suggestions',
+        latId: 'latitude',
+        lonId: 'longitude',
+    });
+
+    // Setup for destination autocomplete
+    setupCityAutocomplete({
+        inputId: 'destination_city',
+        suggestionsId: 'destination_suggestions',
+        latId: 'destination_latitude',
+        lonId: 'destination_longitude',
+    });
+
+    // Client-side validation before form submission
+    document.getElementById('packageForm').addEventListener('submit', function (e) {
+        // Check if hidden lat/lon fields are populated (meaning a selection was made)
+        if (!document.getElementById('latitude').value || !document.getElementById('longitude').value) {
+            e.preventDefault(); // Stop form submission
+            alert('Please select a valid current location from the suggestions.');
+            document.getElementById('current_city').focus(); // Focus on the problematic field
+        } else if (!document.getElementById('destination_latitude').value || !document.getElementById('destination_longitude').value) {
+            e.preventDefault(); // Stop form submission
+            alert('Please select a valid destination from the suggestions.');
+            document.getElementById('destination_city').focus(); // Focus on the problematic field
+        }
+    });
+});
+</script>
+{% endblock %}
