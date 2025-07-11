@@ -22,10 +22,11 @@ if ENVIRONMENT == 'development':
 else:
     DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["https://packagetracker-u8n9.onrender.com", "*"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.ngrok-free.app",
+    "https://*.onrender.com"
 ]
 
 # For Session based logout 
