@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login | Ivan Logistics</title>
+    <title>Admin Login | GECU Logistics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -34,7 +34,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
                     </div>
-                    <h1 class="text-xl font-semibold">Ivan Logistics</h1>
+                    <h1 class="text-xl font-semibold">GECU Logistics</h1>
                 </div>
                 
                 
@@ -56,8 +56,17 @@
                 <h1 class="text-2xl font-bold text-gray-800 mb-1">Admin Login</h1>
                 <p class="text-gray-500">Access your management dashboard</p>
             </div>
+            {% if messages %}
+            <div class="mt-4 text-red-600 text-sm text-center">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
 
-            <form class="space-y-5">
+            <form method="POST" class="space-y-5">
+
+                {% csrf_token %}
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input type="email" id="email" name="email" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="admin@example.com">
@@ -79,7 +88,7 @@
             </form>
 
             <div class="mt-6 text-center text-sm text-gray-500">
-                © 2025 Ivan Logistics. All rights reserved.
+                © 2025 GECU Logistics. All rights reserved.
             </div>
         </div>
     </main>

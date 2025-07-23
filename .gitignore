@@ -6,3 +6,5 @@ media/
 static/
 node/
 *.log
+activate_django.bat
+.req_meta

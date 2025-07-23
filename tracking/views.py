@@ -31,13 +31,15 @@ def login_view(request):
 
     return render(request, 'login.html')
 
-
+@login_required
 def admin_logout_view(request):
     logout(request)
     return redirect('login')
 
+
 def track_package_view(request):
     return render(request, 'tracking/track_package.html')
+
 
 def package_results_view(request):
     tracking_number = request.GET.get('tracking_number')
@@ -61,7 +63,7 @@ def package_results_view(request):
         'tracking_number': tracking_number
     })
 
-
+@login_required
 def list_packages_view(request):
     packages = Package.objects.all().order_by('-updated_at')
     
@@ -95,7 +97,7 @@ def geocode_city(city, country='Nigeria'):
         return float(data['lat']), float(data['lon'])
     return None, None
 
-#@login_required
+@login_required
 def create_package(request):
     if request.method == 'POST':
         tracking_number = request.POST.get('tracking_number')
@@ -149,7 +151,7 @@ def create_package(request):
 
     return render(request, 'tracking/create_package.html')
 
-#@login_required
+@login_required
 def add_delivery_history(request, package_id):
     package = get_object_or_404(Package, id=package_id)
 

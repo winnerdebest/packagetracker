@@ -6,17 +6,30 @@
   <div class="max-w-7xl mx-auto">
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Package Tracking</h1>
-        <p class="mt-1 text-sm text-gray-500">View and manage all your packages</p>
-      </div>
-      <a href="{% url "create_package" %}" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        Add New Package
-      </a>
+  <div>
+    <div class="flex items-center gap-4">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Package Tracking</h1>
+      <span class="text-sm font-medium text-gray-600">Hello, {{ request.user.username }}!</span>
     </div>
+    <p class="mt-1 text-sm text-gray-500">View and manage all your packages</p>
+  </div>
+  
+  <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+    <a href="{% url "create_package" %}" class="inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+      <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Add New Package
+    </a>
+    
+    <a href="{% url 'logout' %}" class="inline-flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+      <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+      </svg>
+      Logout
+    </a>
+  </div>
+</div>
 
     <!-- Messages/Alerts -->
     {% if messages %}
